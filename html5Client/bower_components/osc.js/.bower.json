@@ -1,0 +1,32 @@
+{
+  "name": "osc.js",
+  "version": "2.0.3",
+  "main": "dist/osc.min.js",
+  "ignore": [
+    ".jshintrc",
+    "package.json",
+    "bower.json",
+    "Gruntfile.js",
+    "node_modules",
+    "tests"
+  ],
+  "dependencies": {
+    "slip.js": "1.0.2",
+    "eventEmitter": "4.3.0",
+    "long": "3.0.3"
+  },
+  "devDependencies": {
+    "requirejs": "2.1.20"
+  },
+  "homepage": "https://github.com/colinbdclark/osc.js",
+  "_release": "2.0.3",
+  "_resolution": {
+    "type": "version",
+    "tag": "2.0.3",
+    "commit": "0779ba8b085c9ecfe5bcf4342b5286aa5ad88a26"
+  },
+  "_source": "https://github.com/colinbdclark/osc.js.git",
+  "_target": "~2.0.3",
+  "_originalSource": "osc.js",
+  "_direct": true
+}

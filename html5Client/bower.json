@@ -1,0 +1,22 @@
+{
+  "name": "html5Client",
+  "version": "0.0.0",
+  "authors": [
+    "Skylar Saveland <skylar.saveland@gmail.com>"
+  ],
+  "description": "OSC test client",
+  "keywords": [
+    "osc"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "osc.js": "~2.0.3"
+  }
+}
