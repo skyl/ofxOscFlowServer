@@ -70,14 +70,16 @@ class ofApp : public ofBaseApp{
 
 		// Visualisations
 		ofParameterGroup	visualizeParameters;
-		ftDisplayScalar		displayScalar;
+		ftDisplayScalar displayScalar;
+
 		ftVelocityField		velocityField;
 		ftTemperatureField	temperatureField;
 		ftPressureField		pressureField;
 		ftVTField			velocityTemperatureField;
 
-		ofParameter<bool>	showScalar;
-		ofParameter<bool>	showField;
+		ofParameter<bool> showScalar;
+		ofParameter<bool> showField;
+
 		ofParameter<float>	displayScalarScale;
 		void				setDisplayScalarScale(float& _value) { displayScalar.setScale(_value); }
 		ofParameter<float>	velocityFieldScale;
@@ -94,6 +96,9 @@ class ofApp : public ofBaseApp{
 
 		// DRAW
 		ofParameter<bool> doDrawCamBackground;
+		ofParameter<bool> doDrawFluidFields;
+		ofParameter<bool> doDrawFluidVelocity;
+
 
 		ofParameter<int>	drawMode;
 		void				drawModeSetName(int& _value) ;

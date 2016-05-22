@@ -35,9 +35,37 @@ void ofApp::setup(){
 	fluidSimulation.setup(flowWidth, flowHeight, WIDTH, HEIGHT);
 	particleFlow.setup(flowWidth, flowHeight, WIDTH, HEIGHT);
 	velocityDots.setup(flowWidth / 4, flowHeight / 4);
+	// VISUALIZATION
+	displayScalar.setup(flowWidth, flowHeight);
+	velocityField.setup(flowWidth / 4, flowHeight / 4);
+	temperatureField.setup(flowWidth / 4, flowHeight / 4);
+	pressureField.setup(flowWidth / 4, flowHeight / 4);
+	velocityTemperatureField.setup(flowWidth / 4, flowHeight / 4);
+
+
 
 	// parameters for output
+	doDrawFluidVelocity.set(false);
 	doDrawCamBackground.set(false);
+	doDrawFluidFields.set(false);
+
+	showScalar.set(true);
+	showField.set(true);
+
+
+	visualizeParameters.setName("visualizers");
+	visualizeParameters.add(showScalar.set("show scalar", true));
+	visualizeParameters.add(showField.set("show field", true));
+	visualizeParameters.add(displayScalarScale.set("scalar scale", 0.15, 0.05, 1.0));
+	displayScalarScale.addListener(this, &ofApp::setDisplayScalarScale);
+	visualizeParameters.add(velocityFieldScale.set("velocity scale", 0.1, 0.0, 0.5));
+	velocityFieldScale.addListener(this, &ofApp::setVelocityFieldScale);
+	visualizeParameters.add(temperatureFieldScale.set("temperature scale", 0.1, 0.0, 0.5));
+	temperatureFieldScale.addListener(this, &ofApp::setTemperatureFieldScale);
+	visualizeParameters.add(pressureFieldScale.set("pressure scale", 0.02, 0.0, 0.5));
+	pressureFieldScale.addListener(this, &ofApp::setPressureFieldScale);
+	visualizeParameters.add(velocityLineSmooth.set("line smooth", false));
+	velocityLineSmooth.addListener(this, &ofApp::setVelocityLineSmooth);
 
 }
 
@@ -60,14 +88,27 @@ void ofApp::update(){
 		ofxOscMessage m;
 		receiver.getNextMessage(m);
 
+		ofLogNotice() << m.getAddress();
+
 		// TODO: ROUTER?
 		if (m.getAddress() == "/reset") {
 			// ofAppDoBTN1(m.getArgAsInt32(0));
 			fluidSimulation.reset();
 		}
 		if (m.getAddress() == "/camera") {
-			doDrawCamBackground.set(m.getArgAsInt32(0));
+			doDrawCamBackground.set(!doDrawCamBackground.get());
 		}
+
+		if (m.getAddress() == "/fluidfields") {
+			doDrawFluidFields.set(!doDrawFluidFields.get());
+		}
+		if (m.getAddress() == "/fluidvelocity") {
+			doDrawFluidVelocity.set(!doDrawFluidVelocity.get());
+		}
+
+
+
+		// opticalFlow - drawComposite
 		if (m.getAddress() == "/opticalFlow/strength") {
 			ofParameter<float> strength = opticalFlow.parameters.getFloat("strength");
 			strength.set(m.getArgAsFloat(0));
@@ -98,16 +139,30 @@ void ofApp::update(){
 			inverseY.set(!inverseY.get());
 			ofLogNotice() << opticalFlow.parameters;
 		}
-
-		if (m.getAddress() == "/opticalFlow/decay") {
+		// if (m.getAddress() == "/opticalFlow/decay") {
+		// 	ofParameterGroup blurParams = opticalFlow.parameters.getGroup("time decay blur");
+		// 	ofParameter<int> decay = blurParams.getInt("decay");
+		// 	ofParameter<int> decay = blurParams.getInt("decay");
+		// 	// Weird that if we get this as int, it issues warning ..
+		// 	// but everything is fine if we assign a float to an int ..
+		// 	// ofLogNotice() << m.getArgAsInt32(0);
+		// 	decay.set(m.getArgAsFloat(0));
+		// 	ofLogNotice() << blurParams;
+		// }
+		if (m.getAddress() == "/opticalFlow/blur") {
 			ofParameterGroup blurParams = opticalFlow.parameters.getGroup("time decay blur");
+			ofParameter<int> blur = blurParams.getInt("blur");
 			ofParameter<int> decay = blurParams.getInt("decay");
 			// Weird that if we get this as int, it issues warning ..
 			// but everything is fine if we assign a float to an int ..
 			// ofLogNotice() << m.getArgAsInt32(0);
 			decay.set(m.getArgAsFloat(0));
+			blur.set(m.getArgAsFloat(1));
 			ofLogNotice() << blurParams;
 		}
+
+
+
 
 
 	}
@@ -140,14 +195,14 @@ void ofApp::update(){
 	// mouseForces removed
 	fluidSimulation.update();
 
-	if (particleFlow.isActive()) {
+	// if (particleFlow.isActive()) {
 		particleFlow.setSpeed(fluidSimulation.getSpeed());
 		particleFlow.setCellSize(fluidSimulation.getCellSize());
 		particleFlow.addFlowVelocity(opticalFlow.getOpticalFlow());
 		particleFlow.addFluidVelocity(fluidSimulation.getVelocity());
 		// particleFlow.addDensity(fluidSimulation.getDensity());
 		particleFlow.setObstacle(fluidSimulation.getObstacle());
-	}
+	// }
 	particleFlow.update();
 
 }
@@ -163,11 +218,12 @@ void ofApp::update(){
 
 void ofApp::draw(){
 	ofClear(0,0);
-	if (doDrawCamBackground.get()) {
-		drawSource();
-	}
+
 	drawComposite();
 	// drawOpticalFlow();
+	// drawParticles();
+	// drawFluidVelocity();
+	// drawFluidFields();
 
 	// ofShowCursor();
 	// switch(drawMode.get()) {
@@ -190,13 +246,23 @@ void ofApp::draw(){
 	// }
 
 	// DEBUG
-	ofDrawBitmapStringHighlight(msg, 50, 50);
+	// ofDrawBitmapStringHighlight(msg, 50, 50);
 
 }
 
 //--------------------------------------------------------------
 void ofApp::drawComposite(int _x, int _y, int _width, int _height) {
 	ofPushStyle();
+
+	if (doDrawFluidVelocity) {
+		ofApp::drawFluidVelocity();
+	}
+	if (doDrawCamBackground.get()) {
+		drawSource();
+	}
+	if (doDrawFluidFields) {
+		ofApp::drawFluidFields();
+	}
 
 	ofEnableBlendMode(OF_BLENDMODE_ADD);
 	fluidSimulation.draw(_x, _y, _width, _height);
@@ -212,8 +278,8 @@ void ofApp::drawComposite(int _x, int _y, int _width, int _height) {
 void ofApp::drawParticles(int _x, int _y, int _width, int _height) {
 	ofPushStyle();
 	ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-	if (particleFlow.isActive())
-		particleFlow.draw(_x, _y, _width, _height);
+	// if (particleFlow.isActive())
+	particleFlow.draw(_x, _y, _width, _height);
 	ofPopStyle();
 }
 
